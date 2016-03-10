@@ -53,7 +53,6 @@ LOCAL_SRC_FILES := \
 	drmplane.cpp \
 	drmproperty.cpp \
 	glworker.cpp \
-	hwcomposer.cpp \
         hwcutils.cpp \
         platform.cpp \
         platformdrmgeneric.cpp \
@@ -62,6 +61,16 @@ LOCAL_SRC_FILES := \
 	virtualcompositorworker.cpp \
 	vsyncworker.cpp \
 	worker.cpp
+
+BOARD_DRM_HWCOMPOSER_HWC_VERSION := HWC1
+ifeq ($(strip $(BOARD_DRM_HWCOMPOSER_HWC_VERSION)),HWC1)
+LOCAL_SRC_FILES += hwcomposer.cpp
+else
+LOCAL_SRC_FILES += drmhwctwo.cpp
+LOCAL_CPPFLAGS += \
+        -DHWC2_USE_CPP11 \
+        -DHWC2_INCLUDE_STRINGIFICATION
+endif
 
 ifeq ($(strip $(BOARD_DRM_HWCOMPOSER_BUFFER_IMPORTER)),nvidia-gralloc)
 LOCAL_CPPFLAGS += -DUSE_NVIDIA_IMPORTER
