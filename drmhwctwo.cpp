@@ -528,7 +528,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::SetColorMode(int32_t mode) {
   return unsupported(__func__, mode);
 }
 
-HWC2::Error DrmHwcTwo::HwcDisplay::SetColorTransform(float *matrix,
+HWC2::Error DrmHwcTwo::HwcDisplay::SetColorTransform(const float *matrix,
                                                      int32_t hint) {
   // TODO: Force client composition if we get this
   return unsupported(__func__, matrix, hint);
@@ -822,7 +822,7 @@ hwc2_function_pointer_t DrmHwcTwo::HookDevGetFunction(
     case HWC2::FunctionDescriptor::SetColorTransform:
       return ToHook<HWC2_PFN_SET_COLOR_TRANSFORM>(
           DisplayHook<decltype(&HwcDisplay::SetColorTransform),
-                      &HwcDisplay::SetColorTransform, float *, int32_t>);
+                      &HwcDisplay::SetColorTransform, const float *, int32_t>);
     case HWC2::FunctionDescriptor::SetOutputBuffer:
       return ToHook<HWC2_PFN_SET_OUTPUT_BUFFER>(
           DisplayHook<decltype(&HwcDisplay::SetOutputBuffer),
@@ -898,6 +898,7 @@ hwc2_function_pointer_t DrmHwcTwo::HookDevGetFunction(
           LayerHook<decltype(&HwcLayer::SetLayerZOrder),
                     &HwcLayer::SetLayerZOrder, uint32_t>);
     case HWC2::FunctionDescriptor::Invalid:
+    default:
       return NULL;
   }
 }

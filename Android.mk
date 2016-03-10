@@ -62,7 +62,7 @@ LOCAL_SRC_FILES := \
 	vsyncworker.cpp \
 	worker.cpp
 
-BOARD_DRM_HWCOMPOSER_HWC_VERSION := HWC1
+BOARD_DRM_HWCOMPOSER_HWC_VERSION := HWC2
 ifeq ($(strip $(BOARD_DRM_HWCOMPOSER_HWC_VERSION)),HWC1)
 LOCAL_SRC_FILES += hwcomposer.cpp
 else
