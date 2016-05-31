@@ -35,7 +35,7 @@
 
 namespace android {
 
-DrmResources::DrmResources() : compositor_(this), event_listener_(this) {
+DrmResources::DrmResources() : event_listener_(this) {
 }
 
 DrmResources::~DrmResources() {
@@ -201,10 +201,6 @@ int DrmResources::Init() {
   if (ret)
     return ret;
 
-  ret = compositor_.Init();
-  if (ret)
-    return ret;
-
   ret = event_listener_.Init();
   if (ret) {
     ALOGE("Can't initialize event listener %d", ret);
@@ -331,10 +327,6 @@ int DrmResources::DestroyPropertyBlob(uint32_t blob_id) {
     return ret;
   }
   return 0;
-}
-
-DrmCompositor *DrmResources::compositor() {
-  return &compositor_;
 }
 
 DrmEventListener *DrmResources::event_listener() {

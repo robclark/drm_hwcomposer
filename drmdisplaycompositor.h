@@ -18,7 +18,7 @@
 #define ANDROID_DRM_DISPLAY_COMPOSITOR_H_
 
 #include "drmhwcomposer.h"
-#include "drmcomposition.h"
+#include "drmdisplaycomposition.h"
 #include "drmframebuffer.h"
 #include "separate_rects.h"
 

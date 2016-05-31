@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "drmdisplaycompositor.h"
 #include "drmhwcomposer.h"
 #include "drmresources.h"
 #include "platform.h"
@@ -135,6 +136,7 @@ class DrmHwcTwo : public hwc2_device_t {
     HwcDisplay(DrmResources *drm, std::shared_ptr<Importer> importer,
                const gralloc_module_t *gralloc, hwc2_display_t handle,
                HWC2::DisplayType type);
+    HwcDisplay(const HwcDisplay &) = delete;
     HWC2::Error Init(std::vector<DrmPlane *> *planes);
 
     HWC2::Error RegisterVsyncCallback(hwc2_callback_data_t data,
@@ -185,7 +187,7 @@ class DrmHwcTwo : public hwc2_device_t {
     void AddFenceToRetireFence(int fd);
 
     DrmResources *drm_;
-    DrmDisplayCompositor *compositor_;
+    DrmDisplayCompositor compositor_;
     std::shared_ptr<Importer> importer_;
     std::unique_ptr<Planner> planner_;
     const gralloc_module_t *gralloc_;

@@ -77,10 +77,11 @@ HWC2::Error DrmHwcTwo::Init() {
     return HWC2::Error::NoResources;
   }
 
-  displays_.emplace(
-      std::make_pair(HWC_DISPLAY_PRIMARY,
-                     HwcDisplay(&drm_, importer_, gralloc_, HWC_DISPLAY_PRIMARY,
-                                HWC2::DisplayType::Physical)));
+  displays_.emplace(std::piecewise_construct,
+                    std::forward_as_tuple(HWC_DISPLAY_PRIMARY),
+                    std::forward_as_tuple(&drm_, importer_, gralloc_,
+                                          HWC_DISPLAY_PRIMARY,
+                                          HWC2::DisplayType::Physical));
 
   DrmCrtc *crtc = drm_.GetCrtcForDisplay(static_cast<int>(HWC_DISPLAY_PRIMARY));
   if (!crtc) {
@@ -177,9 +178,9 @@ HWC2::Error DrmHwcTwo::HwcDisplay::Init(std::vector<DrmPlane *> *planes) {
   }
 
   int display = static_cast<int>(handle_);
-  compositor_ = drm_->compositor()->display_compositor(display);
-  if (!compositor_) {
-    ALOGE("Failed to get display compositor for display %d", display);
+  int ret = compositor_.Init(drm_, display);
+  if (ret) {
+    ALOGE("Failed display compositor init for display %d (%d)", display, ret);
     return HWC2::Error::NoResources;
   }
 
@@ -221,7 +222,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::Init(std::vector<DrmPlane *> *planes) {
   if (err != HWC2::Error::None)
     return err;
 
-  int ret = vsync_worker_.Init(drm_, display);
+  ret = vsync_worker_.Init(drm_, display);
   if (ret) {
     ALOGE("Failed to create event worker for d=%d %d\n", display, ret);
     return HWC2::Error::BadDisplay;
@@ -525,7 +526,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::PresentDisplay(int32_t *retire_fence) {
   }
 
   std::unique_ptr<DrmDisplayComposition> composition =
-      compositor_->CreateComposition();
+      compositor_.CreateComposition();
   composition->Init(drm_, crtc_, importer_.get(), planner_.get(), frame_no_);
 
   // TODO: Don't always assume geometry changed
@@ -537,7 +538,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::PresentDisplay(int32_t *retire_fence) {
 
   std::vector<DrmPlane *> primary_planes(primary_planes_);
   std::vector<DrmPlane *> overlay_planes(overlay_planes_);
-  ret = composition->Plan(compositor_->squash_state(), &primary_planes,
+  ret = composition->Plan(compositor_.squash_state(), &primary_planes,
                          &overlay_planes);
   if (ret) {
     ALOGE("Failed to set layers in the composition ret=%d", ret);
@@ -554,7 +555,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::PresentDisplay(int32_t *retire_fence) {
     i = overlay_planes.erase(i);
   }
 
-  ret = compositor_->ApplyComposition(std::move(composition));
+  ret = compositor_.ApplyComposition(std::move(composition));
   if (ret) {
     ALOGE("Failed to apply the frame composition ret=%d", ret);
     return HWC2::Error::BadParameter;
@@ -587,10 +588,10 @@ HWC2::Error DrmHwcTwo::HwcDisplay::SetActiveConfig(hwc2_config_t config) {
   }
 
   std::unique_ptr<DrmDisplayComposition> composition =
-      compositor_->CreateComposition();
+      compositor_.CreateComposition();
   composition->Init(drm_, crtc_, importer_.get(), planner_.get(), frame_no_);
   int ret = composition->SetDisplayMode(*mode);
-  ret = compositor_->ApplyComposition(std::move(composition));
+  ret = compositor_.ApplyComposition(std::move(composition));
   if (ret) {
     ALOGE("Failed to queue dpms composition on %d", ret);
     return HWC2::Error::BadConfig;
@@ -662,10 +663,10 @@ HWC2::Error DrmHwcTwo::HwcDisplay::SetPowerMode(int32_t mode_in) {
   };
 
   std::unique_ptr<DrmDisplayComposition> composition =
-      compositor_->CreateComposition();
+      compositor_.CreateComposition();
   composition->Init(drm_, crtc_, importer_.get(), planner_.get(), frame_no_);
   composition->SetDpmsMode(dpms_value);
-  int ret = compositor_->ApplyComposition(std::move(composition));
+  int ret = compositor_.ApplyComposition(std::move(composition));
   if (ret) {
     ALOGE("Failed to apply the dpms composition ret=%d", ret);
     return HWC2::Error::BadParameter;
