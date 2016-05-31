@@ -333,50 +333,6 @@ int DrmResources::DestroyPropertyBlob(uint32_t blob_id) {
   return 0;
 }
 
-int DrmResources::SetDisplayActiveMode(int display, const DrmMode &mode) {
-  std::unique_ptr<DrmComposition> comp(compositor_.CreateComposition(NULL));
-  if (!comp) {
-    ALOGE("Failed to create composition for dpms on %d", display);
-    return -ENOMEM;
-  }
-  int ret = comp->SetDisplayMode(display, mode);
-  if (ret) {
-    ALOGE("Failed to add mode to composition on %d %d", display, ret);
-    return ret;
-  }
-  ret = compositor_.QueueComposition(std::move(comp));
-  if (ret) {
-    ALOGE("Failed to queue dpms composition on %d %d", display, ret);
-    return ret;
-  }
-  return 0;
-}
-
-int DrmResources::SetDpmsMode(int display, uint64_t mode) {
-  if (mode != DRM_MODE_DPMS_ON && mode != DRM_MODE_DPMS_OFF) {
-    ALOGE("Invalid dpms mode %" PRIu64, mode);
-    return -EINVAL;
-  }
-
-  std::unique_ptr<DrmComposition> comp(compositor_.CreateComposition(NULL));
-  if (!comp) {
-    ALOGE("Failed to create composition for dpms on %d", display);
-    return -ENOMEM;
-  }
-  int ret = comp->SetDpmsMode(display, mode);
-  if (ret) {
-    ALOGE("Failed to add dpms %" PRIu64 " to composition on %d %d", mode,
-          display, ret);
-    return ret;
-  }
-  ret = compositor_.QueueComposition(std::move(comp));
-  if (ret) {
-    ALOGE("Failed to queue dpms composition on %d %d", display, ret);
-    return ret;
-  }
-  return 0;
-}
-
 DrmCompositor *DrmResources::compositor() {
   return &compositor_;
 }

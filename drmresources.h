@@ -69,8 +69,6 @@ class DrmResources {
                            DrmProperty *property);
 
   uint32_t next_mode_id();
-  int SetDisplayActiveMode(int display, const DrmMode &mode);
-  int SetDpmsMode(int display, uint64_t mode);
 
   int CreatePropertyBlob(void *data, size_t length, uint32_t *blob_id);
   int DestroyPropertyBlob(uint32_t blob_id);

@@ -64,31 +64,6 @@ std::unique_ptr<DrmComposition> DrmCompositor::CreateComposition(
   return composition;
 }
 
-int DrmCompositor::QueueComposition(
-    std::unique_ptr<DrmComposition> composition) {
-  int ret;
-
-  ret = composition->Plan(compositor_map_);
-  if (ret)
-    return ret;
-
-  ret = composition->DisableUnusedPlanes();
-  if (ret)
-    return ret;
-
-  for (auto &conn : drm_->connectors()) {
-    int display = conn->display();
-    int ret = compositor_map_[display].QueueComposition(
-        composition->TakeDisplayComposition(display));
-    if (ret) {
-      ALOGE("Failed to queue composition for display %d (%d)", display, ret);
-      return ret;
-    }
-  }
-
-  return 0;
-}
-
 DrmDisplayCompositor *DrmCompositor::display_compositor(int display) {
   return &compositor_map_[display];
 }

@@ -42,7 +42,6 @@ LOCAL_SRC_FILES := \
 	drmresources.cpp \
 	drmcomposition.cpp \
 	drmcompositor.cpp \
-	drmcompositorworker.cpp \
 	drmconnector.cpp \
 	drmcrtc.cpp \
 	drmdisplaycomposition.cpp \
