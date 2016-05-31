@@ -235,8 +235,6 @@ void DrmDisplayCompositor::FrameWorker::Routine() {
 DrmDisplayCompositor::DrmDisplayCompositor()
     : drm_(NULL),
       display_(-1),
-      worker_(this),
-      frame_worker_(this),
       initialized_(false),
       active_(false),
       use_hw_overlays_(true),
@@ -253,9 +251,6 @@ DrmDisplayCompositor::DrmDisplayCompositor()
 DrmDisplayCompositor::~DrmDisplayCompositor() {
   if (!initialized_)
     return;
-
-  worker_.Exit();
-  frame_worker_.Exit();
 
   int ret = pthread_mutex_lock(&lock_);
   if (ret)
@@ -286,18 +281,6 @@ int DrmDisplayCompositor::Init(DrmResources *drm, int display) {
   int ret = pthread_mutex_init(&lock_, NULL);
   if (ret) {
     ALOGE("Failed to initialize drm compositor lock %d\n", ret);
-    return ret;
-  }
-  ret = worker_.Init();
-  if (ret) {
-    pthread_mutex_destroy(&lock_);
-    ALOGE("Failed to initialize compositor worker %d\n", ret);
-    return ret;
-  }
-  ret = frame_worker_.Init();
-  if (ret) {
-    pthread_mutex_destroy(&lock_);
-    ALOGE("Failed to initialize frame worker %d\n", ret);
     return ret;
   }
 
@@ -355,7 +338,6 @@ int DrmDisplayCompositor::QueueComposition(
     return ret;
   }
 
-  worker_.Signal();
   return 0;
 }
 
@@ -520,6 +502,15 @@ int DrmDisplayCompositor::PrepareFrame(DrmDisplayComposition *display_comp) {
       display_comp->squash_regions();
   std::vector<DrmCompositionRegion> &pre_comp_regions =
       display_comp->pre_comp_regions();
+
+  if (!pre_compositor_) {
+    pre_compositor_.reset(new GLWorkerCompositor());
+    int ret = pre_compositor_->Init();
+    if (ret) {
+      ALOGE("Failed to initialize OpenGL compositor %d", ret);
+      return ret;
+    }
+  }
 
   int squash_layer_index = -1;
   if (squash_regions.size() > 0) {
@@ -916,15 +907,6 @@ void DrmDisplayCompositor::ApplyFrame(
 int DrmDisplayCompositor::Composite() {
   ATRACE_CALL();
 
-  if (!pre_compositor_) {
-    pre_compositor_.reset(new GLWorkerCompositor());
-    int ret = pre_compositor_->Init();
-    if (ret) {
-      ALOGE("Failed to initialize OpenGL compositor %d", ret);
-      return ret;
-    }
-  }
-
   int ret = pthread_mutex_lock(&lock_);
   if (ret) {
     ALOGE("Failed to acquire compositor lock %d", ret);
@@ -947,7 +929,12 @@ int DrmDisplayCompositor::Composite() {
     ALOGE("Failed to release compositor lock %d", ret);
     return ret;
   }
+  return ApplyComposition(std::move(composition));
+}
 
+int DrmDisplayCompositor::ApplyComposition(
+    std::unique_ptr<DrmDisplayComposition> composition) {
+  int ret = 0;
   switch (composition->type()) {
     case DRM_COMPOSITION_TYPE_FRAME:
       ret = PrepareFrame(composition.get());
@@ -982,9 +969,10 @@ int DrmDisplayCompositor::Composite() {
           return ret;
         }
       }
-      frame_worker_.QueueFrame(std::move(composition), ret);
+      ApplyFrame(std::move(composition), ret);
       break;
     case DRM_COMPOSITION_TYPE_DPMS:
+      active_ = (composition->dpms_mode() == DRM_MODE_DPMS_ON);
       ret = ApplyDpms(composition.get());
       if (ret)
         ALOGE("Failed to apply dpms for display %d", display_);

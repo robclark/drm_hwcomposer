@@ -89,13 +89,8 @@ int DrmCompositor::QueueComposition(
   return 0;
 }
 
-int DrmCompositor::Composite() {
-  /*
-   * This shouldn't be called, we should be calling Composite() on the display
-   * compositors directly.
-   */
-  ALOGE("Calling base drm compositor Composite() function");
-  return -EINVAL;
+DrmDisplayCompositor *DrmCompositor::display_compositor(int display) {
+  return &compositor_map_[display];
 }
 
 void DrmCompositor::Dump(std::ostringstream *out) const {

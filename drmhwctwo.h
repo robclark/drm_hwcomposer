@@ -16,7 +16,7 @@
 
 #include "drmhwcomposer.h"
 #include "drmresources.h"
-#include "importer.h"
+#include "platform.h"
 #include "vsyncworker.h"
 
 #include <hardware/hwcomposer2.h>
@@ -135,7 +135,7 @@ class DrmHwcTwo : public hwc2_device_t {
     HwcDisplay(DrmResources *drm, std::shared_ptr<Importer> importer,
                const gralloc_module_t *gralloc, hwc2_display_t handle,
                HWC2::DisplayType type);
-    HWC2::Error Init();
+    HWC2::Error Init(std::vector<DrmPlane *> *planes);
 
     HWC2::Error RegisterVsyncCallback(hwc2_callback_data_t data,
                                       hwc2_function_pointer_t func);
@@ -161,6 +161,10 @@ class DrmHwcTwo : public hwc2_device_t {
                                    int32_t *layer_requests);
     HWC2::Error GetDisplayType(int32_t *type);
     HWC2::Error GetDozeSupport(int32_t *support);
+    HWC2::Error GetHdrCapabilities(uint32_t *num_types, int32_t *types,
+                                   float *max_luminance,
+                                   float *max_average_luminance,
+                                   float *min_luminance);
     HWC2::Error GetReleaseFences(uint32_t *num_elements, hwc2_layer_t *layers,
                                  int32_t *fences);
     HWC2::Error PresentDisplay(int32_t *retire_fence);
@@ -181,11 +185,17 @@ class DrmHwcTwo : public hwc2_device_t {
     void AddFenceToRetireFence(int fd);
 
     DrmResources *drm_;
+    DrmDisplayCompositor *compositor_;
     std::shared_ptr<Importer> importer_;
+    std::unique_ptr<Planner> planner_;
     const gralloc_module_t *gralloc_;
+
+    std::vector<DrmPlane *> primary_planes_;
+    std::vector<DrmPlane *> overlay_planes_;
 
     VSyncWorker vsync_worker_;
     DrmConnector *connector_ = NULL;
+    DrmCrtc *crtc_ = NULL;
     hwc2_display_t handle_;
     HWC2::DisplayType type_;
     uint32_t layer_idx_ = 0;

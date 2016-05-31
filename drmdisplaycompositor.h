@@ -90,6 +90,7 @@ class DrmDisplayCompositor {
 
   std::unique_ptr<DrmDisplayComposition> CreateComposition() const;
   int QueueComposition(std::unique_ptr<DrmDisplayComposition> composition);
+  int ApplyComposition(std::unique_ptr<DrmDisplayComposition> composition);
   int Composite();
   int SquashAll();
   void Dump(std::ostringstream *out) const;
@@ -157,9 +158,6 @@ class DrmDisplayCompositor {
 
   DrmResources *drm_;
   int display_;
-
-  DrmCompositorWorker worker_;
-  FrameWorker frame_worker_;
 
   std::queue<std::unique_ptr<DrmDisplayComposition>> composite_queue_;
   std::unique_ptr<DrmDisplayComposition> active_composition_;
