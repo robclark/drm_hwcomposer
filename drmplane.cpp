@@ -126,6 +126,10 @@ int DrmPlane::Init() {
   if (ret)
     ALOGI("Could not get alpha property");
 
+  ret = drm_->GetPlaneProperty(*this, "FENCE_FD", &fence_fd_);
+  if (ret)
+    ALOGI("Could not get FENCE_FD property");
+
   return 0;
 }
 
@@ -187,5 +191,9 @@ const DrmProperty &DrmPlane::rotation_property() const {
 
 const DrmProperty &DrmPlane::alpha_property() const {
   return alpha_property_;
+}
+
+const DrmProperty &DrmPlane::fence_fd() const {
+  return fence_fd_;
 }
 }
