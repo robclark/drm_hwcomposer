@@ -545,25 +545,6 @@ int DrmDisplayCompositor::CommitFrame(DrmDisplayComposition *display_comp,
         break;
       }
       DrmHwcLayer &layer = layers[source_layers.front()];
-      if (!test_only && layer.acquire_fence.get() >= 0) {
-        int acquire_fence = layer.acquire_fence.get();
-        int total_fence_timeout = 0;
-        for (int i = 0; i < kAcquireWaitTries; ++i) {
-          int fence_timeout = kAcquireWaitTimeoutMs * (1 << i);
-          total_fence_timeout += fence_timeout;
-          ret = sync_wait(acquire_fence, fence_timeout);
-          if (ret)
-            ALOGW("Acquire fence %d wait %d failed (%d). Total time %d",
-                  acquire_fence, i, ret, total_fence_timeout);
-          else
-            break;
-        }
-        if (ret) {
-          ALOGE("Failed to wait for acquire %d/%d", acquire_fence, ret);
-          break;
-        }
-        layer.acquire_fence.Close();
-      }
       if (!layer.buffer) {
         ALOGE("Expected a valid framebuffer for pset");
         break;
@@ -585,7 +566,17 @@ int DrmDisplayCompositor::CommitFrame(DrmDisplayComposition *display_comp,
         rotation |= 1 << DRM_ROTATE_180;
       else if (layer.transform & DrmHwcTransform::kRotate270)
         rotation |= 1 << DRM_ROTATE_270;
+
+      if (layer.acquire_fence.get() != -1 && plane->fence_fd().id() != 0)
+      {
+        ret = drmModeAtomicAddProperty(pset, plane->id(), plane->fence_fd().id(), layer.acquire_fence.get());
+        if (ret < 0) {
+          ALOGE("Failed to add FENCE_FD property to pset: %d", ret);
+          break;
+        }
+      }
     }
+
     // Disable the plane if there's no framebuffer
     if (fb_id < 0) {
       ret = drmModeAtomicAddProperty(pset, plane->id(),
