@@ -26,6 +26,8 @@
 #include "separate_rects.h"
 #include "drmhwcgralloc.h"
 
+#include <android/log.h>
+
 struct hwc_import_context;
 
 int hwc_import_init(struct hwc_import_context **ctx);

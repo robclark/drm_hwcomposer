@@ -606,6 +606,15 @@ int DrmDisplayCompositor::CommitFrame(DrmDisplayComposition *display_comp,
       break;
     }
 
+
+ALOGD("plane[%d]: %dx%d+%d+%d -> %dx%d+%d+%d", plane->id(),
+    (int)(source_crop.right - source_crop.left),
+    (int)(source_crop.bottom - source_crop.top),
+    (int)source_crop.left, (int)source_crop.left,
+    (int)(display_frame.right - display_frame.left),
+    (int)(display_frame.bottom - display_frame.top),
+    (int)display_frame.left, (int)display_frame.top);
+
     ret = drmModeAtomicAddProperty(pset, plane->id(),
                                    plane->crtc_property().id(), crtc->id()) < 0;
     ret |= drmModeAtomicAddProperty(pset, plane->id(),

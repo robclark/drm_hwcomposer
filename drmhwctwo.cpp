@@ -190,6 +190,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::Init(std::vector<DrmPlane *> *planes) {
   char use_overlay_planes_prop[PROPERTY_VALUE_MAX];
   property_get("hwc.drm.use_overlay_planes", use_overlay_planes_prop, "1");
   bool use_overlay_planes = atoi(use_overlay_planes_prop);
+  use_overlay_planes = true;
   for (auto &plane : *planes) {
     if (plane->type() == DRM_PLANE_TYPE_PRIMARY)
       primary_planes_.push_back(plane);
@@ -382,6 +383,8 @@ HWC2::Error DrmHwcTwo::HwcDisplay::GetDisplayConfigs(uint32_t *num_configs,
   }
 
   auto num_modes = static_cast<uint32_t>(connector_->modes().size());
+  if (num_modes > 1)
+    num_modes = 1;
   if (!configs) {
     *num_configs = num_modes;
     return HWC2::Error::None;
@@ -605,6 +608,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::SetActiveConfig(hwc2_config_t config) {
                               .top = 0,
                               .right = static_cast<int>(mode->h_display()),
                               .bottom = static_cast<int>(mode->v_display())};
+ALOGE("SetActiveConfig: %dx%d\n", mode->h_display(), mode->v_display());
   client_layer_.SetLayerDisplayFrame(display_frame);
   hwc_frect_t source_crop = {.left = 0.0f,
                              .top = 0.0f,
@@ -697,6 +701,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::ValidateDisplay(uint32_t *num_types,
         ++*num_types;
         break;
       default:
+//        layer.set_validated_type(HWC2::Composition::Client);
         layer.set_validated_type(layer.sf_type());
         break;
     }
@@ -818,6 +823,9 @@ void DrmHwcTwo::HwcLayer::PopulateDrmLayer(DrmHwcLayer *layer) {
   }
 
   OutputFd release_fence = release_fence_output();
+
+  if (!buffer_)
+    ALOGE("%s:%d: null buffer!", __func__, __LINE__);
 
   layer->sf_handle = buffer_;
   layer->acquire_fence = acquire_fence_.Release();

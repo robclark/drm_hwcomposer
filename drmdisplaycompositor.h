@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 #include <tuple>
+#include <bitset>
 
 #include <hardware/hardware.h>
 #include <hardware/hwcomposer.h>

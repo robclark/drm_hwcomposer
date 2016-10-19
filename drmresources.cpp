@@ -339,7 +339,7 @@ int DrmResources::GetProperty(uint32_t obj_id, uint32_t obj_type,
 
   props = drmModeObjectGetProperties(fd(), obj_id, obj_type);
   if (!props) {
-    ALOGE("Failed to get properties for %d/%x", obj_id, obj_type);
+    ALOGE("Failed to get properties for %s (%d/%x)", prop_name, obj_id, obj_type);
     return -ENODEV;
   }
 

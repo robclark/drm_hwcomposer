@@ -152,12 +152,18 @@ int DrmHwcLayer::InitFromHwcLayer(hwc_layer_1_t *sf_layer, Importer *importer,
 int DrmHwcLayer::ImportBuffer(Importer *importer,
                               const gralloc_module_t *gralloc) {
   int ret = buffer.ImportBuffer(sf_handle, importer);
-  if (ret)
+  if (ret) {
+    ALOGE("sf_handle=%p", sf_handle);
+    ALOGE("%s:%d: ret=%d", __func__, __LINE__, ret);
     return ret;
+  }
 
   ret = handle.CopyBufferHandle(sf_handle, gralloc);
-  if (ret)
+  if (ret) {
+    ALOGE("sf_handle=%p", sf_handle);
+    ALOGE("%s:%d: ret=%d", __func__, __LINE__, ret);
     return ret;
+  }
 
   ret = gralloc->perform(gralloc, GRALLOC_MODULE_PERFORM_GET_USAGE,
                          handle.get(), &gralloc_buffer_usage);
