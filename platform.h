@@ -68,12 +68,42 @@ class Planner {
                                 std::vector<DrmPlane *> *planes) = 0;
 
    protected:
+    static bool NeedsScale(DrmHwcLayer *layer) {
+      DrmHwcRect<int> display_frame = layer->display_frame;
+      DrmHwcRect<float> source_crop = layer->source_crop;
+      if (source_crop.width() != (float)display_frame.width())
+        return true;
+      if (source_crop.height() != (float)display_frame.height())
+        return true;
+      return false;
+    }
+
+    static bool CanScale(DrmPlane *plane)
+    {
+      // TODO use CAN_SCALE property rather than assuming primary planes
+      // cannot scale:
+      return plane->type() == DRM_PLANE_TYPE_OVERLAY;
+    }
+
     // Removes and returns the next available plane from planes
-    static DrmPlane *PopPlane(std::vector<DrmPlane *> *planes) {
+    static DrmPlane *PopPlane(std::vector<DrmPlane *> *planes, DrmHwcLayer *layer) {
       if (planes->empty())
         return NULL;
       DrmPlane *plane = planes->front();
       planes->erase(planes->begin());
+
+      if (NeedsScale(layer) && plane->zpos_property().id() && !CanScale(plane)) {
+        /* try to pick another plane! */
+        DrmPlane *first_plane = plane;
+        while (planes->front() != first_plane) {
+          planes->push_back(plane);
+          plane = planes->front();
+          planes->erase(planes->begin());
+          if (CanScale(plane))
+            break;
+        }
+      }
+
       return plane;
     }
 
@@ -91,8 +121,8 @@ class Planner {
     static int Emplace(std::vector<DrmCompositionPlane> *composition,
                        std::vector<DrmPlane *> *planes,
                        DrmCompositionPlane::Type type, DrmCrtc *crtc,
-                       size_t source_layer) {
-      DrmPlane *plane = PopPlane(planes);
+                       size_t source_layer, DrmHwcLayer *layer) {
+      DrmPlane *plane = PopPlane(planes, layer);
       if (!plane)
         return -ENOENT;
 

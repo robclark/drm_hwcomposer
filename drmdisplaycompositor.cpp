@@ -486,6 +486,7 @@ int DrmDisplayCompositor::CommitFrame(DrmDisplayComposition *display_comp,
   ATRACE_CALL();
 
   int ret = 0;
+  int zpos = 1;
 
   std::vector<DrmHwcLayer> &layers = display_comp->layers();
   std::vector<DrmCompositionPlane> &comp_planes =
@@ -669,6 +670,19 @@ ALOGD("plane[%d]: %dx%d+%d+%d -> %dx%d+%d+%d", plane->id(),
         break;
       }
     }
+
+    if (plane->zpos_property().id()) {
+      ret = drmModeAtomicAddProperty(pset, plane->id(),
+                                     plane->zpos_property().id(),
+                                     zpos) < 0;
+      if (ret) {
+        ALOGE("Failed to add zpos property %d to plane %d",
+              plane->zpos_property().id(), plane->id());
+        break;
+      }
+    }
+
+    zpos++;
   }
 
 out:

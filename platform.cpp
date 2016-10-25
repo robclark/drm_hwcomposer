@@ -101,7 +101,7 @@ int PlanStageProtected::ProvisionPlanes(
     }
 
     ret = Emplace(composition, planes, DrmCompositionPlane::Type::kLayer, crtc,
-                  i->first);
+                  i->first, i->second);
     if (ret)
       ALOGE("Failed to dedicate protected layer! Dropping it.");
 
@@ -147,7 +147,7 @@ int PlanStageGreedy::ProvisionPlanes(
   // Fill up the remaining planes
   for (auto i = layers.begin(); i != layers.end(); i = layers.erase(i)) {
     int ret = Emplace(composition, planes, DrmCompositionPlane::Type::kLayer,
-                      crtc, i->first);
+                      crtc, i->first, i->second);
     // We don't have any planes left
     if (ret == -ENOENT)
       break;
