@@ -336,7 +336,7 @@ HWC2::Error DrmHwcTwo::HwcDisplay::GetDisplayAttribute(hwc2_config_t config,
     return HWC2::Error::BadConfig;
   }
 
-  static const int32_t kUmPerInch = 25400;
+  static const int32_t kUmPerInch = 25400*2;
   uint32_t mm_width = connector_->mm_width();
   uint32_t mm_height = connector_->mm_height();
   auto attribute = static_cast<HWC2::Attribute>(attribute_in);
