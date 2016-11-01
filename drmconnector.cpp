@@ -87,6 +87,8 @@ int DrmConnector::UpdateModes() {
   std::vector<DrmMode> new_modes;
   for (int i = 0; i < c->count_modes; ++i) {
     bool exists = false;
+    if (i > 0)
+      break;
     for (const DrmMode &mode : modes_) {
       if (mode == c->modes[i]) {
         new_modes.push_back(mode);
